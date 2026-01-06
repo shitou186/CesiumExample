@@ -1,0 +1,44 @@
+{
+  "name": "map-example-vite",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "@types/lodash-es": "^4.17.12",
+    "@vue/compiler-sfc": "^3.5.26",
+    "@vue/repl": "^4.7.1",
+    "@vue/server-renderer": "^3.5.26",
+    "element-plus": "^2.12.0",
+    "esbuild": "^0.27.1",
+    "lodash-es": "^4.17.21",
+    "monaco-editor": "^0.55.1",
+    "monaco-editor-vue3": "^1.0.5",
+    "sass.js": "^0.11.1",
+    "vite-plugin-svg-icons": "^2.0.1",
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "cesium": "^1.136.0",
+    "fast-glob": "^3.3.3",
+    "sass": "^1.95.1",
+    "typescript": "~5.9.3",
+    "vite": "npm:rolldown-vite@7.2.5",
+    "vite-plugin-cesium": "^1.2.23",
+    "vite-plugin-monaco-editor": "^1.1.0",
+    "vite-plugin-monaco-editor-esm": "^2.0.2",
+    "vue-tsc": "^3.1.4"
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "npm:rolldown-vite@7.2.5"
+    }
+  }
+}
