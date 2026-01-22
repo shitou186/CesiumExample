@@ -13,36 +13,11 @@
             "name": "快速创建地球",
             "thumbnail": "map-create-options.jpg",
             "main": "map/create"
-          }
-        ]
-      },
-      {
-        "name": "UI控件样板",
-        "details": "当前所有示例涉及的UI控件及交互演示",
-        "children": [
-          {
-            "name": "普通UI控件",
-            "thumbnail": "map-create-ui.jpg",
-            "main": "map/create/ui",
-            "hasPannel": true,
-            "pannelFiles": {
-              "react": [
-                {
-                  "name": "依赖1",
-                  "url": "{main}/dep1.tsx"
-                },
-                {
-                  "name": "依赖2",
-                  "url": "{main}/dep2.tsx"
-                }
-              ]
-            }
           },
-          {
-            "name": "GUI属性控件",
-            "thumbnail": "map-create-gui.jpg",
-            "main": "map/create/gui",
-            "hasPannel": true
+           {
+            "name": "基础配置项",
+            "thumbnail": "map-create-options.jpg",
+            "main": "map/config"
           }
         ]
       }
