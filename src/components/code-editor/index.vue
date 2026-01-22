@@ -6,20 +6,44 @@
       :style="{ width: `calc(${leftWidth}% - 2.5px)` }"
     >
       <div class="left-header">
-        <el-link underline="never" type="primary" @click="reset">
-          <el-icon><Refresh /></el-icon>重置
-        </el-link>
-        <el-link underline="never" type="primary" @click="run">
-          <el-icon><VideoPlay /></el-icon>运行
-        </el-link>
+        <div class="header-item">
+          <div class="item-img" @click="changeVisible('js')">
+            <img :src="jsPng" alt="" />
+          </div>
+          <div
+            v-if="vueCompOnlyRead"
+            class="item-img"
+            @click="changeVisible('vue')"
+          >
+            <img :src="htmlPng" alt="" />
+          </div>
+        </div>
+        <div>{{ text }}</div>
+        <div>
+          <el-link underline="never" type="primary" @click="reset">
+            <el-icon><Refresh /></el-icon>重置
+          </el-link>
+          <el-link underline="never" type="primary" @click="run">
+            <el-icon><VideoPlay /></el-icon>运行
+          </el-link>
+        </div>
       </div>
       <CodeEditor
         ref="codeEditorRef"
+        v-show="current === 'js'"
         style="height: calc(100% - 40px)"
         v-model:value="code"
         language="javascript"
         theme="vs-dark"
         :options="editorOptions"
+      />
+      <CodeEditor
+        v-show="current === 'vue'"
+        style="height: calc(100% - 40px)"
+        v-model:value="vueCompOnlyRead"
+        language="html"
+        theme="vs-dark"
+        :options="readOnlyOption"
       />
     </div>
     <div id="splitter" class="splitter-bar"></div>
@@ -28,21 +52,37 @@
       class="preview"
       :style="{ width: `calc(${rightWidth}% - 2.5px)` }"
     >
-      <Map ref="mapRef" :code="code"></Map>
+      <component :is="vueComp" />
+      <Map ref="mapRef" :code="code" :url="url" @onLoad="reset"></Map>
     </div>
   </div>
 </template>
 
 <script setup>
-import { nextTick, onMounted, ref } from "vue";
+import { nextTick, onMounted, readonly, ref, shallowRef } from "vue";
 import { CodeEditor } from "monaco-editor-vue3";
 import Map from "./map.vue";
 import { Refresh, VideoPlay } from "@element-plus/icons-vue";
+import jsPng from "@/assets/images/js.png";
+import htmlPng from "@/assets/images/html.png";
+const current = ref("js");
 
-const code = ref();
+const code = ref(undefined);
+const vueComp = shallowRef();
+const vueCompOnlyRead = shallowRef();
 const codeEditorRef = ref(null);
 const mapRef = ref(null);
 const url = ref(window.location.search.split("id=")[1] || "");
+const text = ref("代码编辑器");
+
+function changeVisible(type) {
+  current.value = type;
+  if (type === "js") {
+    text.value = "代码编辑器";
+  } else if (type === "vue") {
+    text.value = "UI面板代码（只读）";
+  }
+}
 
 /**
  * 重置代码
@@ -60,17 +100,41 @@ function run() {
 }
 
 onMounted(async () => {
-  code.value = await getMapJs();
+  vueComp.value = await getVueComp();
+  vueCompOnlyRead.value = await getOnlyReadVueComp();
   initDragBar();
 });
 
-const mapModules = import.meta.glob("@/example/**/*/map.js", { as: "raw" });
+const mapModules = import.meta.glob("@/example/**/*/map.js", {
+  query: "?raw",
+  import: "default",
+});
+const vueModules = import.meta.glob("@/example/**/*/index.vue", {
+  import: "default",
+});
+
+const vueOnlyReadModules = import.meta.glob("@/example/**/*/index.vue", {
+  query: "?raw",
+  import: "default",
+});
 
 async function getMapJs() {
   const path = `/src/example/${url.value}/map.js`;
   const loadModule = mapModules[path];
-   if (!loadModule) throw new Error(`Map not found: ${url.value}`);
+  if (!loadModule) throw new Error(`Map not found: ${url.value}`);
   return await loadModule();
+}
+
+async function getVueComp() {
+  const path = `/src/example/${url.value}/index.vue`;
+  const loadModule = vueModules[path];
+  return loadModule ? await loadModule() : loadModule || undefined;
+}
+
+async function getOnlyReadVueComp() {
+  const path = `/src/example/${url.value}/index.vue`;
+  const loadModule = vueOnlyReadModules[path];
+  return loadModule ? await loadModule() : loadModule || undefined;
 }
 
 const editorOptions = {
@@ -79,6 +143,14 @@ const editorOptions = {
   automaticLayout: true,
 };
 
+const readOnlyOption = {
+  fontSize: 14,
+  minimap: { enabled: true },
+  automaticLayout: true,
+  readOnly: true,
+};
+
+// 分割栏拖动逻辑
 const leftWidth = ref((550 / window.innerWidth) * 100);
 const rightWidth = ref(100 - leftWidth.value);
 function initDragBar() {
@@ -136,9 +208,28 @@ function initDragBar() {
       background-color: #23272f;
       color: #fff;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       a {
         margin-right: 10px;
+      }
+      .header-item {
+        display: flex;
+        align-items: center;
+        .item-img {
+          width: 24px;
+          height: 24px;
+          display: inline-block;
+          margin-right: 5px;
+          line-height: 0;
+          padding: 2px;
+          border-radius: 2px;
+          background-color: #3ea6ff;
+          cursor: pointer;
+          img {
+            width: 100%;
+            height: 100%;
+          }
+        }
       }
     }
   }
@@ -148,6 +239,7 @@ function initDragBar() {
     display: flex;
     flex-direction: row;
     overflow: hidden;
+    position: relative;
   }
 }
 

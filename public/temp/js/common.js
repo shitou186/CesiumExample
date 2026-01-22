@@ -1,11 +1,12 @@
 "use script"
 
 function init() {
+  printVersion()
   // 判断webgl支持
   getWebGLInfo()
 }
-init()
 
+init()
 
 function getWebGLInfo() {
   const canvas = document.createElement('canvas');
@@ -24,4 +25,9 @@ function getWebGLInfo() {
   } else {
     return 'WEBGL_debug_renderer_info extension not available';
   }
+}
+
+function printVersion() {
+  console.log("✅ Cesium.js 版本:", Cesium.VERSION);
+  console.log("✅ Turf.js 版本:", "7.2.0");
 }

@@ -174,3 +174,6 @@ html {
   background: #209ffd1c;
   color: #ffffff;
 }
+
+
+.cesium-viewer-bottom { display: none !important; }
