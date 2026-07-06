@@ -54,7 +54,10 @@ async function updatePreview() {
   //   // ignore
   // }
 
-  const cleanCode = props.code.replace(/export\s+(let|var|const|function)/g, "$1");
+  const cleanCode = props.code.replace(
+    /export\s+(let|var|const|function)/g,
+    "$1",
+  );
   // 优先使用 srcdoc（与父页面同源，能正确加载相对资源），不支持时回退到 document.write 或 Blob
   if ("srcdoc" in iframe) {
     iframe.srcdoc = `${window.location.origin}/editor-vue.html?id=${props.url}`;
@@ -70,9 +73,14 @@ async function updatePreview() {
   }
 }
 
-function onLoad() {
+async function onLoad() {
   emits("onLoad");
-  if (previewFrame.value && previewFrame.value.contentWindow) {
+  if (previewFrame.value && previewFrame.value.contentWindow && props.code) {
+    if (previewFrame.value.contentWindow.Cesium) {
+      const configData = await (await fetch(`/config/config.json`)).json();
+      previewFrame.value.contentWindow.Cesium.Ion.defaultAccessToken =
+        configData.access_token;
+    }
     registerExportsToWindow(props.code, {
       // 在这里注入需要的全局依赖，例如 Cesium
       Cesium: previewFrame.value.contentWindow.Cesium,
@@ -88,7 +96,7 @@ watch(
   () => props.code,
   () => {
     if (props.code) updatePreview();
-  }
+  },
 );
 
 /**
@@ -143,7 +151,7 @@ function registerExportsToWindow(codeStr, globals = {}) {
     runner(...globalValues);
     console.log(
       `✅ 成功挂载 ${exportedNames.size} 个导出项到 window:`,
-      Array.from(exportedNames)
+      Array.from(exportedNames),
     );
   } catch (error) {
     console.error("❌ 执行动态代码失败:", error);
