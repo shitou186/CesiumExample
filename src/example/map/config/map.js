@@ -27,6 +27,13 @@ export function onMounted() {
   flyTo();
 }
 
+export function onUnmounted() {
+  if (viewer && !viewer.isDestroyed()) {
+    viewer.destroy();
+  }
+  viewer = undefined;
+}
+
 export function flyTo() {
   viewer.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(116.391193, 39.906776, 1000),

@@ -486,12 +486,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import Dialog from "@/components/dialog/index.vue";
-import * as Cesium from "cesium";
-import { ca } from "element-plus/es/locales.mjs";
 const activeName = ref("1");
-const mapWork = window.mapWork;
 const sceneOptions = [
   { value: 1, label: "哥伦布视图(2.5D)" },
   { value: 2, label: "2D模式" },
