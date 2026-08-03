@@ -20,16 +20,25 @@
         </div>
         <div>{{ text }}</div>
         <div>
-          <el-link underline="never" type="primary" @click="reset">
+          <el-link
+            :disabled="isRunning"
+            underline="never"
+            type="primary"
+            @click="reset"
+          >
             <el-icon><Refresh /></el-icon>重置
           </el-link>
-          <el-link underline="never" type="primary" @click="run">
-            <el-icon><VideoPlay /></el-icon>运行
+          <el-link
+            :disabled="isRunning"
+            underline="never"
+            type="primary"
+            @click="run"
+          >
+            <el-icon><VideoPlay /></el-icon>{{ isRunning ? "运行中" : "运行" }}
           </el-link>
         </div>
       </div>
       <CodeEditor
-        ref="codeEditorRef"
         v-show="current === 'js'"
         style="height: calc(100% - 40px)"
         v-model:value="code"
@@ -53,13 +62,22 @@
       :style="{ width: `calc(${rightWidth}% - 2.5px)` }"
     >
       <component :is="vueComp" />
-      <Map ref="mapRef" :code="code" :url="url" @onLoad="reset"></Map>
+      <div v-if="runError" class="runner-error">
+        <el-alert
+          :title="runError"
+          type="error"
+          show-icon
+          :closable="true"
+          @close="runError = ''"
+        />
+      </div>
+      <Map ref="mapRef" :url="url"></Map>
     </div>
   </div>
 </template>
 
 <script setup>
-import { nextTick, onMounted, readonly, ref, shallowRef } from "vue";
+import { onMounted, ref, shallowRef } from "vue";
 import { CodeEditor } from "monaco-editor-vue3";
 import Map from "./map.vue";
 import { Refresh, VideoPlay } from "@element-plus/icons-vue";
@@ -67,13 +85,15 @@ import jsPng from "@/assets/images/js.png";
 import htmlPng from "@/assets/images/html.png";
 const current = ref("js");
 
-const code = ref(undefined);
+const code = ref("");
+const originalCode = ref("");
 const vueComp = shallowRef();
 const vueCompOnlyRead = shallowRef();
-const codeEditorRef = ref(null);
 const mapRef = ref(null);
-const url = ref(window.location.search.split("id=")[1] || "");
+const url = ref(new URLSearchParams(window.location.search).get("id") || "");
 const text = ref("代码编辑器");
+const isRunning = ref(false);
+const runError = ref("");
 
 function changeVisible(type) {
   current.value = type;
@@ -88,21 +108,43 @@ function changeVisible(type) {
  * 重置代码
  */
 async function reset() {
-  code.value = await getMapJs();
+  code.value = originalCode.value;
+  await run();
 }
 
 /**
  * 运行代码
  */
-function run() {
-  const newCode = codeEditorRef.value?.value || "";
-  mapRef.value?.updatePreview(newCode);
+async function run() {
+  if (isRunning.value || !code.value) return;
+
+  isRunning.value = true;
+  runError.value = "";
+  try {
+    await mapRef.value?.run(code.value);
+  } catch (error) {
+    runError.value = error instanceof Error ? error.message : String(error);
+  } finally {
+    isRunning.value = false;
+  }
 }
 
 onMounted(async () => {
-  vueComp.value = await getVueComp();
-  vueCompOnlyRead.value = await getOnlyReadVueComp();
   initDragBar();
+  try {
+    const [sourceCode, panel, panelSource] = await Promise.all([
+      getMapJs(),
+      getVueComp(),
+      getOnlyReadVueComp(),
+    ]);
+    originalCode.value = sourceCode;
+    code.value = sourceCode;
+    vueComp.value = panel;
+    vueCompOnlyRead.value = panelSource;
+    await run();
+  } catch (error) {
+    runError.value = error instanceof Error ? error.message : String(error);
+  }
 });
 
 const mapModules = import.meta.glob("@/example/**/*/map.js", {
@@ -240,6 +282,13 @@ function initDragBar() {
     flex-direction: row;
     overflow: hidden;
     position: relative;
+    .runner-error {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: min(520px, calc(100% - 24px));
+      z-index: 3000;
+    }
   }
 }
 

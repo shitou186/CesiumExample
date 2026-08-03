@@ -1,12 +1,55 @@
-# Vue 3 + TypeScript + Vite
+# CesiumExample
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+基于 Vue 3、Vite、Monaco Editor 和 Cesium 的在线示例项目。
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+## 开发与构建
 
-# vite-plugin-monaco-editor Error
-因为vite3再创建项目的时候会自动的给package.json 加上 type = module 导致的报错
-error when starting dev server:
-TypeError: monacoEditorPlugin is not a function​
-将 package.json 中 type=module 删除即可
-type = module
+```bash
+pnpm install
+pnpm dev
+pnpm build
+```
+
+## 在线编辑器运行时
+
+Cesium 由 npm 包通过 Vite 构建，不再从 `public/lib/Cesium/Cesium.js` 注入。编辑器代码在独立的 `runner.html` iframe 中以 ES Module 运行，每次点击“运行”都会先销毁上一次 Viewer，再创建新的运行环境。
+
+示例代码可直接使用全局的 `Cesium`：
+
+```js
+export let viewer
+
+export function onMounted() {
+  viewer = new Cesium.Viewer("cesiumContainer")
+}
+
+export function onUnmounted() {
+  if (viewer && !viewer.isDestroyed()) viewer.destroy()
+  viewer = undefined
+}
+```
+
+## 引入 Turf、Lodash 和 Cesium
+
+在线编辑器支持以下标准 ES Module 写法。Runner 会把白名单中的裸包导入转换为带缓存的动态加载，库只会在示例实际运行时下载：
+
+```js
+import * as turf from "turf"
+import * as lodash from "lodash"
+
+export async function onMounted() {
+  const point = turf.point([116.39, 39.9])
+  const update = lodash.debounce(() => console.log(point), 100)
+  update()
+}
+```
+
+也支持命名导入和别名：
+
+```js
+import * as Cesium from "cesium"
+import { point } from "@turf/turf"
+import { debounce as delay } from "lodash-es"
+```
+
+当前支持的包名是 `cesium`、`turf`、`@turf/turf`、`lodash` 和 `lodash-es`。`await importLibrary("turf")` 仍可用于显式动态加载。需要新增库时，应先安装 npm 包，再在 `src/pages/runner/main.ts` 的加载器和别名白名单中注册。

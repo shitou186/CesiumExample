@@ -1,4 +1,4 @@
-let viewer;
+export let viewer;
 
 export function onMounted() {
   viewer = new Cesium.Viewer("cesiumContainer", {
@@ -28,6 +28,13 @@ export function onMounted() {
   });
   flyTo();
   loadTerrain();
+}
+
+export function onUnmounted() {
+  if (viewer && !viewer.isDestroyed()) {
+    viewer.destroy();
+  }
+  viewer = undefined;
 }
 
 export function flyTo() {

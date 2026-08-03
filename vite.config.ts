@@ -3,7 +3,6 @@ import { fileURLToPath, URL } from "node:url";
 import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons";
-import monacoEditorPlugin from "vite-plugin-monaco-editor";
 import cesium from 'vite-plugin-cesium';
 
 
@@ -11,13 +10,12 @@ import cesium from 'vite-plugin-cesium';
 export default defineConfig({
   plugins: [
     vue(),
-    cesium(),
+    cesium({ rebuildCesium: true }),
     // * 使用 svg 图标
     createSvgIconsPlugin({
       iconDirs: [resolve(process.cwd(), "src/assets/svgs/")],
       symbolId: "icon-[name]",
     }),
-    monacoEditorPlugin({}),
   ],
   optimizeDeps: {
     exclude: ['@vue/repl'],
@@ -25,6 +23,15 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        index: resolve(process.cwd(), "index.html"),
+        editor: resolve(process.cwd(), "editor-vue.html"),
+        runner: resolve(process.cwd(), "runner.html"),
+      },
     },
   },
 });
