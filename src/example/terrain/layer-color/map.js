@@ -1,7 +1,7 @@
 let viewer;
 
 const TERRAIN_URL =
-  "/terrain-api/tiles/dynamic?cog=%2Fhome%2Fshilei%2Fsource-data%2Ftiff%2FGF7_DLC_E110.6_N32.7_20250111_L1A0001829881_StereoPair%2FGF7_DLC_E110.6_N32.7_20250111_DEM0001829881-BWDPAN.tif&maxZoom=14";
+  "/terrain-api/terrain-service/tiles/dynamic?cog=%2Fhome%2Fshilei%2Fsource-data%2Ftiff%2FGF7_DLC_E110.6_N32.7_20250111_L1A0001829881_StereoPair%2FGF7_DLC_E110.6_N32.7_20250111_DEM0001829881-BWDPAN.tif&maxZoom=14";
 
 const SAND_TABLE_STYLE = {
   backgroundColor: "#f4ecd8",
@@ -16,18 +16,18 @@ const SAND_TABLE_STYLE = {
   lightTime: "2023-06-21T09:00:00+08:00",
   lightAzimuth: 315.0,
   lightAltitude: 45.0,
-  shadeAmbient: 0.035,
-  shadeStrength: 1.0,
-  shadeContrast: 1.2,
-  hillshadeBlend: 0.98,
-  atlasShadowPower: 2.35,
-  slopeDarkness: 0.58,
   gamma: 1.08,
   saturation: 1.25,
   baseBrightness: 1.08,
   waterEnabled: false,
-  shadowCutoff: 0.16,
-  highlightCutoff: 0.94,
+  shadeAmbient: 0.035,
+  shadeStrength: 1.0,
+  shadeContrast: 1.25,
+  hillshadeBlend: 0.98,
+  atlasShadowPower: 2.6,
+  slopeDarkness: 0.72,
+  shadowCutoff: 0.14,
+  highlightCutoff: 0.92,
   rampStops: [0.38, 0.58, 0.76, 0.9],
   colors: {
     water: "#0025fe",
@@ -68,13 +68,66 @@ export function onMounted() {
     attribution: false,
   });
 
-  configureScene();
-  loadTerrain();
+  const rasterLayer = viewer.imageryLayers.addImageryProvider(
+    new Cesium.UrlTemplateImageryProvider({
+      url:
+        "/terrain-api/terrain-service/tiles/dynamic/raster/{z}/{x}/{y}.png" +
+        "?cog=%2Fhome%2Fshilei%2Fsource-data%2Ftiff%2FGF7_DLC_E110.6_N32.7_20250111_L1A0001829881_StereoPair%2FGF7_DLC_E110.6_N32.7_20250111_DEM0001829881-BWDPAN.tif" +
+        "&minHeight=0" +
+        "&maxHeight=1238" +
+        "&buffer=1",
+      tilingScheme: new Cesium.GeographicTilingScheme(),
+      maximumLevel: 16,
+      hasAlphaChannel: true,
+    }),
+  );
+
+  // configureScene();
+  flyTo();
+  // loadTerrain();
+
+  loadTerrain2();
+}
+
+async function loadTerrain2() {
+  const terrainProvider = await Cesium.CesiumTerrainProvider.fromUrl(
+    TERRAIN_URL,
+    {
+      requestVertexNormals: true,
+    },
+  );
+
+  terrainProvider.errorEvent.addEventListener((error) => {
+    console.error("地形瓦片加载失败：", error);
+  });
+
+  viewer.terrainProvider = terrainProvider;
+  viewer.scene.verticalExaggeration = SAND_TABLE_STYLE.verticalExaggeration;
+
+  const background = Cesium.Color.fromCssColorString(
+    SAND_TABLE_STYLE.backgroundColor,
+  );
+
+  viewer.scene.skyBox.show = false;
+  viewer.scene.skyAtmosphere.show = false;
+  viewer.scene.fog.enabled = false;
+  viewer.scene.backgroundColor = background;
+
+  viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString(
+    SAND_TABLE_STYLE.baseColor,
+  );
+  viewer.scene.globe.showGroundAtmosphere = false;
+  viewer.scene.globe.undergroundColor = background;
+  viewer.scene.globe.enableLighting = false;
 }
 
 export function flyTo() {
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(110.628511, 32.783291, 34997),
+    destination: Cesium.Cartesian3.fromDegrees(
+      110.49022071676,
+      32.5374987758575,
+      34997,
+    ),
     orientation: {
       heading: Cesium.Math.toRadians(0),
       pitch: Cesium.Math.toRadians(-35),
@@ -112,9 +165,9 @@ function configureScene() {
 
   // [新增]：覆盖系统默认的太阳光，提供一个固定的西北偏光
   viewer.scene.light = new Cesium.DirectionalLight({
-    direction: new Cesium.Cartesian3(1.0, -1.0, -0.5),
-    color: Cesium.Color.WHITE,
+    direction: new Cesium.Cartesian3(0.25, -0.32, -0.92),
     intensity: 1.0,
+    color: Cesium.Color.WHITE,
   });
 
   viewer.shadows = false;
@@ -177,7 +230,6 @@ async function loadTerrain() {
     });
 
     applyTerrainClipping(bbox);
-    // addSandTableBase(bbox, heightInfo);
     flyToSandTable(bbox, heightInfo);
 
     console.log("成功获取动态边界框:", bbox);
@@ -285,47 +337,6 @@ function applyTerrainClipping(bbox) {
   });
 }
 
-function addSandTableBase(bbox, { minHeight, heightRange }) {
-  const existing = viewer.entities.getById("terrain-sand-table-base");
-
-  if (existing) {
-    viewer.entities.remove(existing);
-  }
-
-  const [minLon, minLat, maxLon, maxLat] = bbox;
-  const lonPadding = (maxLon - minLon) * SAND_TABLE_STYLE.basePaddingRatio;
-  const latPadding = (maxLat - minLat) * SAND_TABLE_STYLE.basePaddingRatio;
-  const baseHeight = minHeight - Math.max(heightRange * 0.08, 150.0);
-  const bottomHeight =
-    baseHeight -
-    Math.max(
-      heightRange * SAND_TABLE_STYLE.pedestalDepthRatio,
-      SAND_TABLE_STYLE.minPedestalDepth,
-    );
-
-  viewer.entities.add({
-    id: "terrain-sand-table-base",
-    polygon: {
-      hierarchy: Cesium.Cartesian3.fromDegreesArray([
-        minLon - lonPadding,
-        minLat - latPadding,
-        maxLon + lonPadding,
-        minLat - latPadding,
-        maxLon + lonPadding,
-        maxLat + latPadding,
-        minLon - lonPadding,
-        maxLat + latPadding,
-      ]),
-      height: baseHeight,
-      extrudedHeight: bottomHeight,
-      material: Cesium.Color.fromCssColorString(SAND_TABLE_STYLE.baseColor),
-      outline: false,
-      closeTop: true,
-      closeBottom: true,
-    },
-  });
-}
-
 function flyToSandTable(bbox, { minHeight, maxHeight, heightRange }) {
   const bounds = getBoundsInfo(bbox);
   const points = [
@@ -340,7 +351,6 @@ function flyToSandTable(bbox, { minHeight, maxHeight, heightRange }) {
     SAND_TABLE_STYLE.cameraRangeScale;
 
   viewer.camera.flyToBoundingSphere(boundingSphere, {
-    duration: 2,
     offset: new Cesium.HeadingPitchRange(
       Cesium.Math.toRadians(0),
       Cesium.Math.toRadians(-30),
@@ -486,7 +496,16 @@ czm_material czm_getMaterial(czm_materialInput materialInput) {
     float heightRange = max(maxHeight - minHeight, 1.0);
     float t = clamp((materialInput.height - minHeight) / heightRange, 0.0, 1.0);
     float slope = clamp(materialInput.slope, 0.0, PI * 0.5);
-    float aspect = wrapRadians(materialInput.aspect);
+    // float aspect = wrapRadians(materialInput.aspect);
+    float rawAspect = wrapRadians(materialInput.aspect);
+    float fixedAspect = azimuthToAspectAngle(lightAzimuth);
+    float aspectMix = 0.1;
+
+    vec2 rawAspectVec = vec2(cos(rawAspect), sin(rawAspect));
+    vec2 fixedAspectVec = vec2(cos(fixedAspect), sin(fixedAspect));
+    vec2 blendedAspectVec = mix(fixedAspectVec, rawAspectVec, aspectMix);
+
+    float aspect = atan(blendedAspectVec.y, blendedAspectVec.x);
 
     vec3 color = getRampColor(t, materialInput.height);
     float shade = globalMapperHillshade(slope, aspect);
