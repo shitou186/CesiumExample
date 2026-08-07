@@ -114,7 +114,10 @@
             "name": "反选遮罩层",
             "thumbnail": "layerg-geojson-mask.jpg",
             "main": "layer-graphic/geojson/mask",
-            "api": "Mask.html"
+            "api": "Mask.html",
+            "resources": [
+              "@/libs/polygon-clipping/polygon-clipping.umd.min.js"
+            ]
           }
         ]
       },

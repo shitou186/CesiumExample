@@ -1,6 +1,22 @@
 export let viewer;
 
+function getPolygonClipping() {
+  const library = globalThis.polygonClipping;
+  if (!library || typeof library.difference !== "function") {
+    throw new Error(
+      "polygon-clipping is unavailable. Check this example's resources configuration.",
+    );
+  }
+  return library;
+}
+
+export function difference(subject, ...clipGeometries) {
+  const library = getPolygonClipping();
+  return library.difference(subject, ...clipGeometries);
+}
+
 export function onMounted() {
+  getPolygonClipping();
   viewer = new Cesium.Viewer("cesiumContainer", {
     // 抗锯齿
     fxaa: true,
