@@ -10,6 +10,32 @@
           <div class="item-img" @click="changeVisible('js')">
             <img :src="jsPng" alt="" />
           </div>
+          <el-popover
+            v-if="resources.length"
+            placement="bottom-start"
+            trigger="click"
+            :width="320"
+            popper-class="example-resource-popover"
+          >
+            <template #reference>
+              <button class="resource-trigger" type="button" title="依赖资源">
+                <el-icon><Link /></el-icon>
+              </button>
+            </template>
+            <div class="resource-title">
+              当前示例依赖的资源文件（请注意顺序）
+            </div>
+            <a
+              v-for="resource in resources"
+              :key="resource.label"
+              class="resource-link"
+              :href="resource.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ resource.label }}
+            </a>
+          </el-popover>
           <div
             v-if="vueCompOnlyRead"
             class="item-img"
@@ -71,7 +97,7 @@
           @close="runError = ''"
         />
       </div>
-      <Map ref="mapRef" :url="url"></Map>
+      <Map ref="mapRef" :url="url" :resources="resources"></Map>
     </div>
   </div>
 </template>
@@ -81,7 +107,12 @@ import { onMounted, ref, shallowRef } from "vue";
 import { CodeEditor } from "monaco-editor-vue3";
 import Map from "./map.vue";
 import { mountAfterRun } from "./mount-after-run.mjs";
-import { Refresh, VideoPlay } from "@element-plus/icons-vue";
+import {
+  findCatalogItemByMain,
+  resolveExampleResources,
+} from "./example-resources.mjs";
+import { Link, Refresh, VideoPlay } from "@element-plus/icons-vue";
+import catalog from "@/config/example.json";
 import jsPng from "@/assets/images/js.png";
 import htmlPng from "@/assets/images/html.png";
 const current = ref("js");
@@ -95,6 +126,7 @@ const url = ref(new URLSearchParams(window.location.search).get("id") || "");
 const text = ref("代码编辑器");
 const isRunning = ref(false);
 const runError = ref("");
+const resources = ref([]);
 
 function changeVisible(type) {
   current.value = type;
@@ -133,6 +165,7 @@ async function run() {
 onMounted(async () => {
   initDragBar();
   try {
+    resolveCurrentResources();
     const [sourceCode, panel, panelSource] = await Promise.all([
       getMapJs(),
       getVueComp(),
@@ -153,6 +186,16 @@ const mapModules = import.meta.glob("@/example/**/*/map.js", {
   query: "?raw",
   import: "default",
 });
+const libraryResourceUrls = import.meta.glob("/src/libs/**/*.{js,css}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
+const exampleResourceUrls = import.meta.glob("/src/example/**/*.{js,css}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+});
 const vueModules = import.meta.glob("@/example/**/*/index.vue", {
   import: "default",
 });
@@ -161,6 +204,17 @@ const vueOnlyReadModules = import.meta.glob("@/example/**/*/index.vue", {
   query: "?raw",
   import: "default",
 });
+
+function resolveCurrentResources() {
+  const item = findCatalogItemByMain(catalog, url.value);
+  resources.value = resolveExampleResources({
+    resources: item?.resources,
+    exampleMain: url.value,
+    baseUrl: new URL(import.meta.env.BASE_URL, window.location.origin).href,
+    libraryResourceUrls,
+    exampleResourceUrls,
+  });
+}
 
 async function getMapJs() {
   const path = `/src/example/${url.value}/map.js`;
@@ -259,11 +313,11 @@ function initDragBar() {
       .header-item {
         display: flex;
         align-items: center;
+        gap: 5px;
         .item-img {
           width: 24px;
           height: 24px;
           display: inline-block;
-          margin-right: 5px;
           line-height: 0;
           padding: 2px;
           border-radius: 2px;
@@ -273,6 +327,19 @@ function initDragBar() {
             width: 100%;
             height: 100%;
           }
+        }
+        .resource-trigger {
+          display: inline-flex;
+          width: 28px;
+          height: 28px;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          border: 0;
+          border-radius: 2px;
+          color: #fff;
+          background-color: #3ea6ff;
+          cursor: pointer;
         }
       }
     }
@@ -290,6 +357,23 @@ function initDragBar() {
       right: 12px;
       width: min(520px, calc(100% - 24px));
       z-index: 3000;
+    }
+  }
+}
+
+.example-resource-popover {
+  .resource-title {
+    padding-bottom: 10px;
+    font-weight: 600;
+  }
+  .resource-link {
+    display: block;
+    padding: 8px 10px;
+    color: #409eff;
+    overflow-wrap: anywhere;
+    text-decoration: none;
+    &:hover {
+      background-color: #ecf5ff;
     }
   }
 }
