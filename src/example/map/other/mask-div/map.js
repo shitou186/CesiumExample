@@ -31,7 +31,7 @@ export function onMounted() {
       },
     },
   });
-  flyTo();
+  maskDiv();
   add3dtiles();
 }
 
@@ -58,20 +58,24 @@ export function flyTo() {
 async function add3dtiles() {
   // //data.mars3d.cn/3dtiles/jzw-hefei/tileset.json
 
-  const url = "//data.mars3d.cn/3dtiles/jzw-hefei/tileset.json";
-  // const url = "http://192.168.99.14:8010/shape/diff-yuhu/tileset.json";
+  // const url = "//data.mars3d.cn/3dtiles/jzw-hefei/tileset.json";
+  const url = "http://192.168.99.14:8010/shape/diff-yuhu/tileset.json";
   const tileset = await Cesium.Cesium3DTileset.fromUrl(url);
+  customShader2(
+    tileset,
+    Cesium.Color.fromCssColorString("#00ffff"),
+  );
   // 将 tileset 添加到场景中
   viewer.scene.primitives.add(tileset);
   // 飞行到 3D Tiles 位置
-  // await viewer.flyTo(tileset, {
-  //   duration: 2, // 飞行时间（秒）
-  //   offset: new Cesium.HeadingPitchRange(
-  //     0, // 航向角
-  //     Cesium.Math.toRadians(-45), // 俯仰角（向下看）
-  //     tileset.boundingSphere.radius * 2, // 相机距离
-  //   ),
-  // });
+  await viewer.flyTo(tileset, {
+    duration: 2, // 飞行时间（秒）
+    offset: new Cesium.HeadingPitchRange(
+      0, // 航向角
+      Cesium.Math.toRadians(-45), // 俯仰角（向下看）
+      tileset.boundingSphere.radius * 2, // 相机距离
+    ),
+  });
 }
 
 // 河流面状
@@ -102,26 +106,33 @@ function customShader1(tileset) {
     fragmentShaderText: `
       void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
           vec3 positionMC = fsInput.attributes.positionMC;
-          material.diffuse = vec3(0.0, 1.0-positionMC.y*0.005, 1.0-positionMC.y*0.0015);
+          material.diffuse = vec3(0.0, 1.0-positionMC.z*0.005, 1.0-positionMC.y*0.0015);
       }`,
   });
   tileset.customShader = customShader;
 }
 
 // 纯渐变色+动态光圈
-function customShader2(tileset) {
+function customShader2(tileset, color = Cesium.Color.CYAN) {
   const customShader = new Cesium.CustomShader({
+    uniforms: {
+      u_baseColor: {
+        type: Cesium.UniformType.VEC3,
+        value: new Cesium.Cartesian3(color.red, color.green, color.blue),
+      },
+    },
     //片元着色器
     fragmentShaderText: `
       void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {
-          vec3 positionMC = fsInput.attributes.positionMC;
-          material.diffuse = vec3(0.0, 1.0-positionMC.y*0.005, 1.0-positionMC.y*0.0015);
+          float modelHeight = fsInput.attributes.positionMC.z;
+          float heightBrightness = clamp(1.0 - modelHeight * 0.005, 0.0, 1.0);
+          material.diffuse = u_baseColor * heightBrightness;
 
           float _baseHeight = 18.0; // 物体的基础高度，需要修改成一个合适的建筑基础高度
           float _heightRange = 60.0; // 高亮的范围(_baseHeight ~ _baseHeight + _heightRange) 默认是 0-60米
           float _glowRange = 120.0; // 光环的移动范围(高度)
 
-          float vtxf_height = fsInput.attributes.positionMC.y - _baseHeight;
+          float vtxf_height = modelHeight - _baseHeight;
           float vtxf_a11 = fract(czm_frameNumber / 360.0) * 3.14159265 * 2.0; //此处括号内分母为移动速度
           float vtxf_a12 = vtxf_height / _heightRange + sin(vtxf_a11) * 0.1;
           material.diffuse *= vec3(vtxf_a12, vtxf_a12, vtxf_a12);
