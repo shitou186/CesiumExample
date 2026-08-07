@@ -80,6 +80,7 @@
 import { onMounted, ref, shallowRef } from "vue";
 import { CodeEditor } from "monaco-editor-vue3";
 import Map from "./map.vue";
+import { mountAfterRun } from "./mount-after-run.mjs";
 import { Refresh, VideoPlay } from "@element-plus/icons-vue";
 import jsPng from "@/assets/images/js.png";
 import htmlPng from "@/assets/images/html.png";
@@ -139,9 +140,10 @@ onMounted(async () => {
     ]);
     originalCode.value = sourceCode;
     code.value = sourceCode;
-    vueComp.value = panel;
     vueCompOnlyRead.value = panelSource;
-    await run();
+    await mountAfterRun(run, () => {
+      vueComp.value = panel;
+    });
   } catch (error) {
     runError.value = error instanceof Error ? error.message : String(error);
   }
