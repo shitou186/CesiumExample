@@ -23,6 +23,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  resources: {
+    type: Array,
+    default: () => [],
+  },
 });
 
 let runSequence = 0;
@@ -73,7 +77,7 @@ async function onRunnerLoad() {
   }
 
   try {
-    const result = await runner.run(task.code, props.url);
+    const result = await runner.run(task.code, props.url, props.resources);
     if (task.runId !== runSequence) return;
 
     window.mapWork = createMapWorkProxy(runner, result.exports);

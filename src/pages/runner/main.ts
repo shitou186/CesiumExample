@@ -1,5 +1,9 @@
 import * as Cesium from "cesium";
 import { init, parse } from "es-module-lexer";
+import {
+  loadResources,
+  type ResolvedResource,
+} from "./resource-loader.mjs";
 import "./style.css";
 
 type ExampleModule = Record<string, unknown> & {
@@ -203,8 +207,13 @@ async function dispose() {
   }
 }
 
-async function run(code: string, exampleId: string) {
+async function run(
+  code: string,
+  exampleId: string,
+  resources: ResolvedResource[] = [],
+) {
   await dispose();
+  await loadResources(resources);
 
   const transformed = await transformRuntimeImports(code);
   const cesiumBinding = transformed.importedBindings.has("Cesium")
