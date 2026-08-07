@@ -18,12 +18,12 @@ const SKYBOX_SOURCES = {
     negativeZ: "./img/skybox-near/wanxia/SunSetDown.png",
   },
   night: {
-    positiveX: "./img/skybox-milkyway/tycho2t3_80_px.jpg",
-    negativeX: "./img/skybox-milkyway/tycho2t3_80_mx.jpg",
-    positiveY: "./img/skybox-milkyway/tycho2t3_80_py.jpg",
-    negativeY: "./img/skybox-milkyway/tycho2t3_80_my.jpg",
-    positiveZ: "./img/skybox-milkyway/tycho2t3_80_pz.jpg",
-    negativeZ: "./img/skybox-milkyway/tycho2t3_80_mz.jpg",
+    positiveX: "./img/skybox/2/tycho2t3_80_px.jpg",
+    negativeX: "./img/skybox/2/tycho2t3_80_mx.jpg",
+    positiveY: "./img/skybox/2/tycho2t3_80_py.jpg",
+    negativeY: "./img/skybox/2/tycho2t3_80_my.jpg",
+    positiveZ: "./img/skybox/2/tycho2t3_80_pz.jpg",
+    negativeZ: "./img/skybox/2/tycho2t3_80_mz.jpg",
   },
 };
 
@@ -213,7 +213,9 @@ let transitionValue = 0;
 let sliderSyncFrame;
 
 function syncTransitionSlider() {
-  const sliders = window.parent.document.querySelectorAll(".el-slider [role=slider]");
+  const sliders = window.parent.document.querySelectorAll(
+    ".el-slider [role=slider]",
+  );
   const slider = Array.from(sliders).find(
     (item) =>
       Number(item.getAttribute("aria-valuemin")) === 0 &&
