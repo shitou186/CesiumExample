@@ -243,7 +243,7 @@ ${transformed.code}
   }
 }
 
-async function invoke(name: string, args: unknown[] = []) {
+function invoke(name: string, args: unknown[] = []) {
   const method = activeModule?.[name];
   if (typeof method !== "function") {
     throw new Error(`Runner export is not callable: ${name}`);
