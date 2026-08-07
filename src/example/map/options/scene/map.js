@@ -52,7 +52,7 @@ export function flyTo() {
 //地形加载
 async function loadTerrain() {
   // console.log("加载地形");
-  const url = "http://192.168.0.164:8608/dem/30";
+  const url = "https://data.mars3d.cn/terrain";
   viewer.terrainProvider = await Cesium.CesiumTerrainProvider.fromUrl(url, {
     requestVertexNormals: true,
     requestWaterMask: true,
@@ -90,7 +90,7 @@ export function changeScene(key, value) {
       //天空盒 背景色
       viewer.scene.backgroundColor = Cesium.Color.fromCssColorString(value);
       break;
-    case "fox":
+    case "fog":
       //雾化 显隐
       viewer.scene.fog.enabled = value;
       if (value) {
@@ -118,7 +118,6 @@ export function changeScene(key, value) {
     case "enableTranslate":
       // 平移地图(2D和2.5D)
       viewer.scene.screenSpaceCameraController.enableTranslate = value;
-      console.log(viewer.scene);
       break;
     case "constrainedAxis":
       // 南北极绕轴心旋转
@@ -129,10 +128,11 @@ export function changeScene(key, value) {
     case "enableCollisionDetection":
       // 是否进入地下  碰撞检测
       viewer.scene.enableCollisionDetection = value;
-      break;    
+      break;
     case "minimumCollisionTerrainHeight":
       // 最小碰撞高度
-      viewer.scene.screenSpaceCameraController.minimumCollisionTerrainHeight = value;
+      viewer.scene.screenSpaceCameraController.minimumCollisionTerrainHeight =
+        value;
       break;
     case "minimumZoomDistance":
       // 相机最近视距

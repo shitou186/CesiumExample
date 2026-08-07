@@ -1,7 +1,11 @@
 export let viewer;
 
+//https://cesium.com/learn/cesiumjs/ref-doc/BaseLayerPicker.html
+
 export function onMounted() {
   viewer = new Cesium.Viewer("cesiumContainer", {
+    // 抗锯齿
+    fxaa: true,
     // 禁用时间轴
     timeline: false,
     // 禁用底部时间控制器（动画播放控件）
@@ -17,7 +21,7 @@ export function onMounted() {
     // 禁用场景模式选择器（2D/3D/Columbus View 切换）
     sceneModePicker: false,
     // 禁用基础图层选择器
-    baseLayerPicker: false,
+    baseLayerPicker: true,
     // 禁用导航说明（左上角的帮助提示）
     navigationHelpButton: false,
     // 禁用信息框（点击实体时弹出的信息窗口）
@@ -25,6 +29,7 @@ export function onMounted() {
     attribution: false,
   });
   flyTo();
+  loadTerrain();
 }
 
 export function onUnmounted() {
@@ -36,12 +41,22 @@ export function onUnmounted() {
 
 export function flyTo() {
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(116.391193, 39.906776, 1000),
+    destination: Cesium.Cartesian3.fromDegrees(116.475196, 30.615012, 24043.2),
     orientation: {
-      heading: Cesium.Math.toRadians(0), // 朝北（0 弧度）
-      pitch: Cesium.Math.toRadians(-30), // 向下俯视 30 度
+      heading: Cesium.Math.toRadians(355.3), // 朝北（0 弧度）
+      pitch: Cesium.Math.toRadians(-38), // 向下俯视 30 度
       roll: 0, // 不滚动
     },
-    duration: 2.5,
+    duration: 0,
+  });
+}
+
+//地形加载
+async function loadTerrain() {
+  // console.log("加载地形");
+  const url = "http://data.mars3d.cn/terrain";
+  viewer.terrainProvider = await Cesium.CesiumTerrainProvider.fromUrl(url, {
+    requestVertexNormals: true,
+    requestWaterMask: true,
   });
 }
