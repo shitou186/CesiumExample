@@ -45,10 +45,10 @@ export function flyTo() {
     complete: () => {
       // 1. 实例化控制器
       const orbitController = new OrbitFly(viewer);
-      // 2. 启动围绕大雁塔的环绕飞行
+      // 2. 启动环绕飞行
       orbitController.start({
-        lng: 108.961601,
-        lat: 34.217109,
+        lng: 112.722391,
+        lat: 26.774526,
         alt: 0,
         distance: 800, // 距离目标 800 米
         pitch: -20, // 视角俯仰 20 度
