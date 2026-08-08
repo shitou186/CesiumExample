@@ -124,13 +124,6 @@
         "dev": "basis/camera/",
         "children": [
           {
-            "name": "视角书签",
-            "thumbnail": "map-fun-bookmark.jpg",
-            "main": "map/fun/bookmark",
-            "api": "Map.html#getCameraView",
-            "hasPannel": true
-          },
-          {
             "name": "开场动画",
             "thumbnail": "map-fun-openFlyAnimation.gif",
             "main": "map/fun/openFlyAnimation",
@@ -173,13 +166,6 @@
             "hasPannel": true
           },
           {
-            "name": "视角历史记录",
-            "thumbnail": "thing-camera-cameraHistory.jpg",
-            "main": "thing/camera/cameraHistory",
-            "api": "CameraHistory.html",
-            "hasPannel": true
-          },
-          {
             "name": "键盘漫游",
             "thumbnail": "control-inside-keyboardRoam.jpg",
             "main": "thing/camera/keyboardRoam",
@@ -187,46 +173,11 @@
             "hasPannel": true
           },
           {
-            "name": "角色控制",
-            "thumbnail": "thing-camera-roleController.gif",
-            "main": "thing/camera/roleController",
-            "hasPannel": true,
-            "resources": ["RunModelPrimitive.js"]
-          },
-          {
-            "name": "动画漫游(tween插值)",
-            "thumbnail": "thing-camera-tween.jpg",
-            "main": "thing/camera/tween",
-            "hasPannel": true,
-            "libs": ["mars3d", "tween"],
-            "resources": ["TweensRoaming.js"]
-          },
-          {
             "name": "限定视角范围",
             "thumbnail": "thing-camera-cameraHistory-limit.jpg",
             "main": "thing/camera/cameraHistory-limit",
             "api": "CameraHistory.html",
             "hasPannel": true
-          },
-          {
-            "name": "执行时序任务",
-            "thumbnail": "thing-other-task.jpg",
-            "main": "thing/other/task",
-            "api": "Task.html",
-            "hasPannel": true,
-            "resources": [
-              "/lib/mars3d/extends/CameraList.js",
-              "/lib/mars3d/extends/CameraView.js",
-              "/lib/mars3d/extends/MapRotate.js",
-              "/lib/mars3d/extends/PointRotate.js",
-              "/lib/mars3d/extends/RouteLine.js",
-              "/lib/mars3d/extends/ZoomIn.js",
-              "/lib/mars3d/extends/ZoomOut.js",
-              "/lib/mars3d/extends/GraphicStyle.js",
-              "/lib/mars3d/extends/GraphicOptions.js",
-              "/lib/mars3d/extends/CreateTarget.js",
-              "/lib/mars3d/extends/SceneOptions.js"
-            ]
           }
         ]
       },
