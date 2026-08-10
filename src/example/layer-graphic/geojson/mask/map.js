@@ -1,3 +1,5 @@
+import { flatten } from "lodash-es";
+import * as turf from "@turf/turf";
 export let viewer;
 
 function getPolygonClipping() {
@@ -47,6 +49,7 @@ export function onMounted() {
       },
     },
   });
+  addGeoJson();
 }
 
 export function onUnmounted() {
@@ -56,17 +59,41 @@ export function onUnmounted() {
   viewer = undefined;
 }
 
-//  center: { lat: 31.795863, lng: 117.212909, alt: 2113, heading: 25, pitch: -34 }
-export function flyTo() {
-  viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(117.212909, 31.795863, 2113),
-    orientation: {
-      heading: Cesium.Math.toRadians(25), // 朝北（0 弧度）
-      pitch: Cesium.Math.toRadians(-34), // 向下俯视 30 度
-      roll: 0, // 不滚动
-    },
-    duration: 0,
-  });
-}
 // 数据获取 https://datav.aliyun.com/portal/school/atlas/area_generator
-function addGeoJson() {}
+function addGeoJson() {
+  fetch("./geojson/420100.geojson")
+    .then((response) => response.json())
+    .then((response) => {
+      const outerLine = turf.polygonToLine(response.features[0]);
+      const holes = flatten(outerLine.features[0].geometry.coordinates);
+      const positionsLine = Cesium.Cartesian3.fromDegreesArray(holes);
+      const area = new Cesium.Entity({
+        id: 1,
+        polygon: {
+          hierarchy: {
+            positions: Cesium.Cartesian3.fromDegreesArray([
+              100, 0, 100, 89, 150, 89, 150, 0,
+            ]), //外部区域
+            holes: [
+              {
+                positions: positionsLine, //挖空区域
+              },
+            ],
+          },
+          material: Cesium.Color.BLUE.withAlpha(0.6), //外部颜色
+        },
+      });
+      const line = new Cesium.Entity({
+        id: 2,
+        polyline: {
+          positions: positionsLine,
+          width: 2, //边界线宽
+          material: Cesium.Color.fromCssColorString("#6dcdeb"), //边界线颜色
+        },
+      });
+      viewer.entities.add(area);
+      viewer.entities.add(line);
+      viewer.flyTo(line);
+    });
+}
+
