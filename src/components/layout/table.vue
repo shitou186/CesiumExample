@@ -19,7 +19,7 @@
           class="list-item"
         >
           <div class="list-children_title">
-            {{ cItem.name + getCount(item) }}
+            {{ cItem.name + getCount(cItem) }}
           </div>
           <div class="list-chilidren">
             <div
@@ -61,7 +61,7 @@ function getImageUrl(value: string) {
 function scrollTo(v: string) {
   const orders = v.split("-");
   const allList = document.querySelectorAll(
-    ".el-scrollbar__view .list"
+    ".el-scrollbar__view .list",
   ) as NodeListOf<HTMLElement>;
   const f = Number(orders[0]) || 0;
   const s = Number(orders[1]) || 0;
@@ -84,9 +84,9 @@ function scrollTo(v: string) {
 }
 
 function jumpUrl(item: any) {
-  debugger
+  debugger;
   let url = import.meta.env.BASE_URL;
-    url += "editor-vue.html";
+  url += "editor-vue.html";
 
   // 处理参数
   url += `?id=` + encodeURI(item.main);

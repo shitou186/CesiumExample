@@ -115,9 +115,7 @@
             "thumbnail": "layerg-geojson-mask.jpg",
             "main": "layer-graphic/geojson/mask",
             "api": "Mask.html",
-            "resources": [
-              "@/libs/polygon-clipping/polygon-clipping.umd.min.js"
-            ]
+            "resources": ["@/libs/polygon-clipping/polygon-clipping.umd.min.js"]
           }
         ]
       },
@@ -201,19 +199,6 @@
             "main": "map/fun/changeMouseModel",
             "api": "Map.html#changeMouseModel",
             "hasPannel": true
-          },
-          {
-            "name": "街景操作习惯",
-            "thumbnail": "thing-camera-streetView.jpg",
-            "main": "thing/camera/streetView",
-            "api": "StreetView.html",
-            "hasPannel": true
-          },
-          {
-            "name": "DIV的transform缩放",
-            "thumbnail": "map-other-transform.jpg",
-            "main": "map/other/transform",
-            "resources": ["map.css"]
           }
         ]
       },
@@ -233,11 +218,7 @@
             "thumbnail": "map-double-compare.gif",
             "main": "map/double/compare",
             "api": "MapCompare.html",
-            "hasPannel": true,
-            "resources": [
-              "/img/div-graphic/divGraphic.css",
-              "/lib/dom2img/dom-to-image.js"
-            ]
+            "hasPannel": true
           },
           {
             "name": "二三维联动(与leaflet)",
@@ -270,25 +251,12 @@
           {
             "name": "月球",
             "thumbnail": "map-other-moon.jpg",
-            "main": "map/other/moon",
-            "resources": ["background.css"]
+            "main": "map/other/moon"
           },
           {
             "name": "火星",
             "thumbnail": "map-other-mars.jpg",
             "main": "map/other/mars"
-          },
-          {
-            "name": "离线数据",
-            "thumbnail": "map-other-offline.jpg",
-            "main": "map/other/offline",
-            "hasPannel": true
-          },
-          {
-            "name": "浏览器缓存数据",
-            "thumbnail": "map-other-networkPlug.jpg",
-            "main": "map/other/networkPlug",
-            "libs": ["mars3d", "localforage", "cesium-networkPlug"]
           }
         ]
       }
