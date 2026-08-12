@@ -1,9 +1,15 @@
 import * as Cesium from "cesium";
 import { init, parse } from "es-module-lexer";
+import { createApp, nextTick, type App, type Component } from "vue";
 import {
   loadResources,
   type ResolvedResource,
 } from "./resource-loader.mjs";
+import {
+  disposeExampleRuntime,
+  mountExampleView,
+  resolveExampleViewLoader,
+} from "./example-view-runtime.mjs";
 import "./style.css";
 
 type ExampleModule = Record<string, unknown> & {
@@ -36,7 +42,12 @@ const libraryAliases: Record<string, LibraryName> = {
 };
 
 const libraryCache = new Map<LibraryName, Promise<unknown>>();
+const exampleViewModules = import.meta.glob<Component>(
+  "@/example/**/view.vue",
+  { import: "default" },
+);
 let activeModule: ExampleModule | undefined;
+let activeViewApp: Pick<App, "mount" | "unmount"> | undefined;
 
 async function importLibrary(name: LibraryName) {
   const loader = libraryLoaders[name];
@@ -197,14 +208,15 @@ async function transformRuntimeImports(code: string) {
 
 async function dispose() {
   const moduleToDispose = activeModule;
+  const viewAppToDispose = activeViewApp;
   activeModule = undefined;
+  activeViewApp = undefined;
 
-  try {
-    await moduleToDispose?.beforeUnmount?.();
-    await moduleToDispose?.onUnmounted?.();
-  } finally {
-    document.getElementById("cesiumContainer")?.replaceChildren();
-  }
+  await disposeExampleRuntime({
+    module: moduleToDispose,
+    viewApp: viewAppToDispose,
+    container: document.getElementById("cesiumContainer") ?? undefined,
+  });
 }
 
 async function run(
@@ -215,23 +227,37 @@ async function run(
   await dispose();
   await loadResources(resources);
 
-  const transformed = await transformRuntimeImports(code);
-  const cesiumBinding = transformed.importedBindings.has("Cesium")
-    ? ""
-    : "const Cesium = globalThis.Cesium;";
+  const container = document.getElementById("cesiumContainer");
+  if (!container) {
+    throw new Error("Runner container #cesiumContainer was not found");
+  }
 
-  const source = `
+  let moduleUrl: string | undefined;
+  try {
+    const viewLoader = resolveExampleViewLoader(exampleViewModules, exampleId);
+    activeViewApp = await mountExampleView({
+      loader: viewLoader,
+      container,
+      createApp,
+      nextTick,
+    });
+
+    const transformed = await transformRuntimeImports(code);
+    const cesiumBinding = transformed.importedBindings.has("Cesium")
+      ? ""
+      : "const Cesium = globalThis.Cesium;";
+
+    const source = `
 ${cesiumBinding}
 globalThis.Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxNDFhNjAwZC00ZGY5LTRlMDAtODkwNy00NTE3OWE5OWRjMWIiLCJpZCI6MzM2NjksImlhdCI6MTYyMzMwNTA1MX0.egWNYNFOcuWertsrejw0fjVD0GBhKbUUj0oQWVqJgSc";
 const importLibrary = globalThis.importLibrary;
 ${transformed.code}
 //# sourceURL=cesium-example://${exampleId}/map.js
 `;
-  const moduleUrl = URL.createObjectURL(
-    new Blob([source], { type: "text/javascript" }),
-  );
+    moduleUrl = URL.createObjectURL(
+      new Blob([source], { type: "text/javascript" }),
+    );
 
-  try {
     const loadedModule = (await import(
       /* @vite-ignore */ moduleUrl
     )) as ExampleModule;
@@ -248,7 +274,7 @@ ${transformed.code}
     await dispose();
     throw error;
   } finally {
-    URL.revokeObjectURL(moduleUrl);
+    if (moduleUrl) URL.revokeObjectURL(moduleUrl);
   }
 }
 

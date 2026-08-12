@@ -37,9 +37,11 @@
             </a>
           </el-popover>
           <div
-            v-if="vueCompOnlyRead"
+            v-for="file in readonlyVueFiles"
+            :key="file.key"
             class="item-img"
-            @click="changeVisible('vue')"
+            :title="file.label"
+            @click="changeVisible(`vue:${file.key}`)"
           >
             <img :src="htmlPng" alt="" />
           </div>
@@ -73,9 +75,10 @@
         :options="editorOptions"
       />
       <CodeEditor
-        v-show="current === 'vue'"
+        v-if="activeReadonlyVueFile"
+        v-show="current.startsWith('vue:')"
         style="height: calc(100% - 40px)"
-        v-model:value="vueCompOnlyRead"
+        :value="activeReadonlyVueFile.source"
         language="html"
         theme="vs-dark"
         :options="readOnlyOption"
@@ -103,10 +106,11 @@
 </template>
 
 <script setup>
-import { onMounted, ref, shallowRef } from "vue";
+import { computed, onMounted, ref, shallowRef } from "vue";
 import { CodeEditor } from "monaco-editor-vue3";
 import Map from "./map.vue";
 import { mountAfterRun } from "./mount-after-run.mjs";
+import { buildReadonlyVueFiles } from "./readonly-vue-files.mjs";
 import {
   findCatalogItemByMain,
   resolveExampleResources,
@@ -120,7 +124,12 @@ const current = ref("js");
 const code = ref("");
 const originalCode = ref("");
 const vueComp = shallowRef();
-const vueCompOnlyRead = shallowRef();
+const readonlyVueFiles = ref([]);
+const activeReadonlyVueFile = computed(() =>
+  readonlyVueFiles.value.find(
+    (file) => `vue:${file.key}` === current.value,
+  ),
+);
 const mapRef = ref(null);
 const url = ref(new URLSearchParams(window.location.search).get("id") || "");
 const text = ref("代码编辑器");
@@ -132,8 +141,8 @@ function changeVisible(type) {
   current.value = type;
   if (type === "js") {
     text.value = "代码编辑器";
-  } else if (type === "vue") {
-    text.value = "UI面板代码（只读）";
+  } else {
+    text.value = `${activeReadonlyVueFile.value?.label ?? "Vue"}代码（只读）`;
   }
 }
 
@@ -166,14 +175,18 @@ onMounted(async () => {
   initDragBar();
   try {
     resolveCurrentResources();
-    const [sourceCode, panel, panelSource] = await Promise.all([
+    const [sourceCode, panel, viewSource, panelSource] = await Promise.all([
       getMapJs(),
       getVueComp(),
-      getOnlyReadVueComp(),
+      getOnlyReadVueComp("view.vue"),
+      getOnlyReadVueComp("index.vue"),
     ]);
     originalCode.value = sourceCode;
     code.value = sourceCode;
-    vueCompOnlyRead.value = panelSource;
+    readonlyVueFiles.value = buildReadonlyVueFiles({
+      viewSource,
+      panelSource,
+    });
     await mountAfterRun(run, () => {
       vueComp.value = panel;
     });
@@ -200,7 +213,10 @@ const vueModules = import.meta.glob("@/example/**/*/index.vue", {
   import: "default",
 });
 
-const vueOnlyReadModules = import.meta.glob("@/example/**/*/index.vue", {
+const vueOnlyReadModules = import.meta.glob([
+  "@/example/**/index.vue",
+  "@/example/**/view.vue",
+], {
   query: "?raw",
   import: "default",
 });
@@ -229,8 +245,8 @@ async function getVueComp() {
   return loadModule ? await loadModule() : loadModule || undefined;
 }
 
-async function getOnlyReadVueComp() {
-  const path = `/src/example/${url.value}/index.vue`;
+async function getOnlyReadVueComp(filename) {
+  const path = `/src/example/${url.value}/${filename}`;
   const loadModule = vueOnlyReadModules[path];
   return loadModule ? await loadModule() : loadModule || undefined;
 }
