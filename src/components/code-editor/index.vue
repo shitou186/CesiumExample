@@ -126,9 +126,7 @@ const originalCode = ref("");
 const vueComp = shallowRef();
 const readonlyVueFiles = ref([]);
 const activeReadonlyVueFile = computed(() =>
-  readonlyVueFiles.value.find(
-    (file) => `vue:${file.key}` === current.value,
-  ),
+  readonlyVueFiles.value.find((file) => `vue:${file.key}` === current.value),
 );
 const mapRef = ref(null);
 const url = ref(new URLSearchParams(window.location.search).get("id") || "");
@@ -213,18 +211,24 @@ const vueModules = import.meta.glob("@/example/**/*/index.vue", {
   import: "default",
 });
 
-const vueOnlyReadModules = import.meta.glob([
-  "@/example/**/index.vue",
-  "@/example/**/view.vue",
-], {
-  query: "?raw",
-  import: "default",
-});
+const vueOnlyReadModules = import.meta.glob(
+  ["@/example/**/index.vue", "@/example/**/view.vue"],
+  {
+    query: "?raw",
+    import: "default",
+  },
+);
 
 function resolveCurrentResources() {
   const item = findCatalogItemByMain(catalog, url.value);
+  const libraryResources = (item?.libs ?? []).filter(
+    (library) =>
+      /^(?:https?:)?\/\//i.test(library) ||
+      library.startsWith("/") ||
+      library.startsWith("@/libs/"),
+  );
   resources.value = resolveExampleResources({
-    resources: item?.resources,
+    resources: [...libraryResources, ...(item?.resources ?? [])],
     exampleMain: url.value,
     baseUrl: new URL(import.meta.env.BASE_URL, window.location.origin).href,
     libraryResourceUrls,

@@ -1,10 +1,7 @@
 import * as Cesium from "cesium";
 import { init, parse } from "es-module-lexer";
 import { createApp, nextTick, type App, type Component } from "vue";
-import {
-  loadResources,
-  type ResolvedResource,
-} from "./resource-loader.mjs";
+import { loadResources, type ResolvedResource } from "./resource-loader.mjs";
 import {
   disposeExampleRuntime,
   mountExampleView,
@@ -19,7 +16,11 @@ type ExampleModule = Record<string, unknown> & {
   onUnmounted?: () => void | Promise<void>;
 };
 
-type LibraryName = "cesium" | "lodash-es" | "turf";
+type LibraryName =
+  | "cesium"
+  | "lodash-es"
+  | "turf"
+  | "tdt-terrain-cesium-plugin";
 
 type SourceReplacement = {
   start: number;
@@ -31,6 +32,7 @@ const libraryLoaders: Record<LibraryName, () => Promise<unknown>> = {
   cesium: async () => Cesium,
   "lodash-es": () => import("lodash-es"),
   turf: () => import("@turf/turf"),
+  "tdt-terrain-cesium-plugin": () => import("tdt-terrain-cesium-plugin"),
 };
 
 const libraryAliases: Record<string, LibraryName> = {
@@ -39,6 +41,7 @@ const libraryAliases: Record<string, LibraryName> = {
   "@turf/turf": "turf",
   lodash: "lodash-es",
   "lodash-es": "lodash-es",
+  "tdt-terrain-cesium-plugin": "tdt-terrain-cesium-plugin",
 };
 
 const libraryCache = new Map<LibraryName, Promise<unknown>>();
@@ -117,7 +120,9 @@ function createStaticImportReplacement(
     throw new SyntaxError(`Unsupported runtime import clause: ${clause}`);
   }
   if (defaultBinding && !/^[A-Za-z_$][\w$]*$/.test(defaultBinding)) {
-    throw new SyntaxError(`Unsupported default import binding: ${defaultBinding}`);
+    throw new SyntaxError(
+      `Unsupported default import binding: ${defaultBinding}`,
+    );
   }
 
   const bindings = [
@@ -168,7 +173,10 @@ async function transformRuntimeImports(code: string) {
 
     const libraryName = libraryAliases[importSpecifier.n];
     if (!libraryName) {
-      if (!importSpecifier.n.startsWith(".") && !importSpecifier.n.startsWith("/")) {
+      if (
+        !importSpecifier.n.startsWith(".") &&
+        !importSpecifier.n.startsWith("/")
+      ) {
         throw new Error(
           `Unsupported bare module import "${importSpecifier.n}". Supported modules: ${Object.keys(libraryAliases).join(", ")}`,
         );
