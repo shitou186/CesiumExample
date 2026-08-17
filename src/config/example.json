@@ -219,28 +219,6 @@
             "main": "map/double/compare",
             "api": "MapCompare.html",
             "hasPannel": true
-          },
-          {
-            "name": "二三维联动(与leaflet)",
-            "thumbnail": "map-double-leaflet.jpg",
-            "main": "map/double/leaflet",
-            "hasPannel": true,
-            "libs": ["mars2d", "mars3d"],
-            "resources": ["map.css"]
-          },
-          {
-            "name": "二三维联动(与openlayers)",
-            "thumbnail": "map-double-openlayers.jpg",
-            "main": "map/double/openlayers",
-            "libs": ["olcesium", "mars3d"],
-            "resources": ["map.css"]
-          },
-          {
-            "name": "街景联动【需要Token】",
-            "thumbnail": "map-double-streetview.jpg",
-            "main": "map/double/streetview",
-            "hasPannel": true,
-            "resources": ["map.css"]
           }
         ]
       },
@@ -284,8 +262,7 @@
             "api": "TdtTerrainProvider.html",
             "details": "需要引入 mars3d-tdt 插件库",
             "hasPannel": true,
-            "download": false,
-            "libs": ["mars3d", "mars3d-tdt"]
+            "download": false
           }
         ]
       },

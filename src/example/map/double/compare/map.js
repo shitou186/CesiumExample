@@ -1,6 +1,5 @@
 export let leftViewer;
 export let rightViewer;
-export let viewer;
 
 let activeViewer;
 let removeLeftPostRender;
@@ -41,7 +40,6 @@ export function init() {
     animation: false,
     timeline: false,
   });
-  viewer = leftViewer;
 
   const syncFromLeft = () => {
     if (activeViewer === leftViewer) {
@@ -85,7 +83,7 @@ export function onUnmounted() {
 }
 
 export function flyTo() {
-  viewer?.camera.flyTo({
+  leftViewer?.camera.flyTo({
     destination: Cesium.Cartesian3.fromDegrees(112.722391, 26.774526, 755496),
     orientation: {
       heading: Cesium.Math.toRadians(0),
