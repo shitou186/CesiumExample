@@ -1,6 +1,7 @@
 import * as Cesium from "cesium";
 import { init, parse } from "es-module-lexer";
 import { createApp, nextTick, type App, type Component } from "vue";
+import { createClassModuleRegistry } from "./class-module-registry.mjs";
 import { loadResources, type ResolvedResource } from "./resource-loader.mjs";
 import {
   disposeExampleRuntime,
@@ -16,35 +17,35 @@ type ExampleModule = Record<string, unknown> & {
   onUnmounted?: () => void | Promise<void>;
 };
 
-type LibraryName =
-  | "cesium"
-  | "lodash-es"
-  | "turf"
-  | "tdt-terrain-cesium-plugin";
-
 type SourceReplacement = {
   start: number;
   end: number;
   source: string;
 };
 
-const libraryLoaders: Record<LibraryName, () => Promise<unknown>> = {
+const classModuleRegistry = createClassModuleRegistry(
+  import.meta.glob("@/class/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"),
+);
+
+const libraryLoaders: Record<string, () => Promise<unknown>> = {
   cesium: async () => Cesium,
   "lodash-es": () => import("lodash-es"),
   turf: () => import("@turf/turf"),
   "tdt-terrain-cesium-plugin": () => import("tdt-terrain-cesium-plugin"),
+  ...classModuleRegistry.loaders,
 };
 
-const libraryAliases: Record<string, LibraryName> = {
+const libraryAliases: Record<string, string> = {
   cesium: "cesium",
   turf: "turf",
   "@turf/turf": "turf",
   lodash: "lodash-es",
   "lodash-es": "lodash-es",
   "tdt-terrain-cesium-plugin": "tdt-terrain-cesium-plugin",
+  ...classModuleRegistry.aliases,
 };
 
-const libraryCache = new Map<LibraryName, Promise<unknown>>();
+const libraryCache = new Map<string, Promise<unknown>>();
 const exampleViewModules = import.meta.glob<Component>(
   "@/example/**/view.vue",
   { import: "default" },
@@ -52,7 +53,7 @@ const exampleViewModules = import.meta.glob<Component>(
 let activeModule: ExampleModule | undefined;
 let activeViewApp: Pick<App, "mount" | "unmount"> | undefined;
 
-async function importLibrary(name: LibraryName) {
+async function importLibrary(name: string) {
   const loader = libraryLoaders[name];
   if (!loader) {
     throw new Error(`Unsupported runtime library: ${name}`);
@@ -89,7 +90,7 @@ function splitImportClause(clause: string) {
 
 function createStaticImportReplacement(
   clause: string,
-  libraryName: LibraryName,
+  libraryName: string,
   importIndex: number,
 ) {
   if (!clause) {
