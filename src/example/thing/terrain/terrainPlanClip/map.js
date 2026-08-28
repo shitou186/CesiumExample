@@ -31,43 +31,26 @@ export function onMounted() {
   viewer.scene.globe.depthTestAgainstTerrain = true;
   flyTo();
   addTerrain();
+  add3dtiles();
 
   setTimeout(() => {
     const terrainClip = new MultiTerrainClip(viewer, {
       stylePit: {
-        diffHeight: 50, // 井的深度
+        diffHeight: 30, // 井的深度
         image: "/img/textures/poly-stone.jpg",
         imageBottom: "/img/textures/poly-soil.jpg",
-        splitNum: 80, // 井边界插值数
+        splitNum: 50, // 井边界插值数
       },
     });
 
-    terrainClip.addArea(
-      [
-        [116.334222, 30.899171, 645.46],
-        [116.370874, 30.899171, 645.46],
-        [116.370874, 30.944509, 645.46],
-        [116.334222, 30.944509, 645.46],
-      ],
-      { diffHeight: 900, exact: true },
-    );
+    terrainClip.addArea([
+      [117.212459, 31.845379, 42.83],
 
-    terrainClip.addArea(
-      [
-        [116.416497, 30.934256, 775.89],
-        [116.427392, 30.962941, 1084.88],
-        [116.434838, 30.932608, 900.43],
-        [116.462994, 30.923081, 771.42],
-        [116.437571, 30.916044, 906.39],
-        [116.44977, 30.894487, 776.06],
-        [116.424183, 30.908752, 727.02],
-        [116.402218, 30.898406, 593.08],
-        [116.414309, 30.918806, 588.78],
-        [116.387022, 30.933539, 700.65],
-      ],
-      { diffHeight: 200, exact: true },
-    );
-  }, 2000);
+      [117.214264, 31.845386, 42.83],
+      [117.214291, 31.843833, 42.83],
+      [117.212451, 31.843854, 42.83],
+    ]);
+  }, 5000);
 }
 
 export function onUnmounted() {
@@ -79,7 +62,7 @@ export function onUnmounted() {
 
 export function flyTo() {
   viewer.camera.flyTo({
-    destination: Cesium.Cartesian3.fromDegrees(116.378229, 30.827414, 16933),
+    destination: Cesium.Cartesian3.fromDegrees(117.21586, 30.827414, 554),
     orientation: {
       heading: Cesium.Math.toRadians(0), // 朝北（0 弧度）
       pitch: Cesium.Math.toRadians(-56), // 向下俯视 30 度
@@ -96,4 +79,20 @@ async function addTerrain() {
     requestWaterMask: true, // 水面效果
   });
   viewer.terrainProvider = provider;
+}
+
+async function add3dtiles() {
+  const url = "http://data.mars3d.cn/3dtiles/max-piping/tileset.json";
+  const tileset = await Cesium.Cesium3DTileset.fromUrl(url);
+  // 将 tileset 添加到场景中
+  viewer.scene.primitives.add(tileset);
+  // 飞行到 3D Tiles 位置
+  await viewer.flyTo(tileset, {
+    duration: 2, // 飞行时间（秒）
+    offset: new Cesium.HeadingPitchRange(
+      0, // 航向角
+      Cesium.Math.toRadians(-45), // 俯仰角（向下看）
+      tileset.boundingSphere.radius * 2, // 相机距离
+    ),
+  });
 }
